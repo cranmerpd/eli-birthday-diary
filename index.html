@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Diary of a Wimpy Kid: Eli's Big deal</title>
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #3a2a1a;
+  font-family: 'Patrick Hand', cursive;
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+#book-container {
+  width: 90vw;
+  max-width: 900px;
+  height: 80vh;
+  max-height: 700px;
+  position: relative;
+}
+.page {
+  background: #fffef8;
+  border: 1px solid #ddd;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+  overflow: hidden;
+  position: relative;
+}
+.page-cover {
+  background: #c41e3a;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+}
+.page-cover h1 {
+  font-family: 'Caveat', cursive;
+  font-size: 3.5rem;
+  color: #ffe066;
+  text-shadow: 2px 2px 0 #000, -1px -1px 0 #000;
+  margin-bottom: 10px;
+  line-height: 1.1;
+}
+.page-cover h2 {
+  font-size: 2rem;
+  color: #fff;
+  margin-bottom: 20px;
+}
+.page-cover .subtitle {
+  font-size: 1.4rem;
+  color: #ffe066;
+  margin-top: 20px;
+}
+.lined {
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 28px,
+    #a0c4e8 29px
+  );
+  background-position: 0 40px;
+  padding: 40px 30px 30px;
+}
+.page-content {
+  height: 100%;
+  width: 100%;
+  padding: 20px;
+  position: relative;
+}
+canvas {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+  background: transparent;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.done-btn {
+  position: absolute;
+  bottom: 15px;
+  right: 15px;
+  background: #c41e3a;
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 1.1rem;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 2px 2px 0 #000;
+}
+.done-btn:active { transform: scale(0.96); }
+.signed-label {
+  position: absolute;
+  bottom: 10px;
+  left: 15px;
+  font-size: 0.9rem;
+  color: #666;
+  font-style: italic;
+}
+#controls {
+  margin-top: 15px;
+  text-align: center;
+}
+#fullscreen-btn, #reset-btn {
+  background: #ffe066;
+  border: 3px solid #000;
+  padding: 12px 24px;
+  font-family: 'Caveat', cursive;
+  font-size: 1.4rem;
+  border-radius: 10px;
+  cursor: pointer;
+  margin: 0 8px;
+  box-shadow: 3px 3px 0 #000;
+}
+.intro-text {
+  font-size: 1.3rem;
+  line-height: 1.6;
+  color: #222;
+}
+.stick-figure {
+  font-size: 4rem;
+  text-align: center;
+  margin: 20px 0;
+}
+</style>
+</head>
+<body>
+<div id="book-container">
+  <div id="book"></div>
+</div>
+<div id="controls">
+  <button id="fullscreen-btn">Open the Diary (Fullscreen)</button>
+  <button id="reset-btn" style="display:none;">Clear All Signatures (for testing)</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
+<script>
+const TOTAL_SIGNING_PAGES = 40;
+const IDLE_MS = 120000; // 2 minutes
+let pageFlip;
+let lastActivity = Date.now();
+let idleTimer;
+let signedPages = JSON.parse(localStorage.getItem('eli-diary-signed') || '{}');
+
+function createPages() {
+  const book = document.getElementById('book');
+  book.innerHTML = '';
+
+  // Cover
+  const cover = document.createElement('div');
+  cover.className = 'page page-cover';
+  cover.dataset.density = 'hard';
+  cover.innerHTML = `
+    <h1>DIARY</h1>
+    <h2>of a Wimpy Kid</h2>
+    <div class="subtitle">Eli's Big deal</div>
+    <div style="margin-top:30px;font-size:1.2rem;">A novel in cartoons<br>(kind of)</div>
+  `;
+  book.appendChild(cover);
+
+  // Intro pages
+  const intro1 = document.createElement('div');
+  intro1.className = 'page lined';
+  intro1.innerHTML = `
+    <div class="page-content">
+      <div class="intro-text">
+        <p><strong>November 14</strong></p>
+        <p style="margin-top:20px;">Today is my 8th birthday and a bunch of people are at my house.</p>
+        <p style="margin-top:15px;">If you're reading this, that means you have to sign the next blank page you find. Draw whatever you want. Just don't draw anything that will get me in trouble with Mom.</p>
+        <p style="margin-top:15px;">This is my diary. Keep flipping until you find an empty page. That one is yours.</p>
+        <div class="stick-figure">😐</div>
+      </div>
+    </div>
+  `;
+  book.appendChild(intro1);
+
+  const intro2 = document.createElement('div');
+  intro2.className = 'page lined';
+  intro2.innerHTML = `
+    <div class="page-content">
+      <div class="intro-text">
+        <p>Rules for signing my diary:</p>
+        <p style="margin-top:15px;">1. Flip past any pages that already have drawings.</p>
+        <p>2. When you find a blank page, draw on it with your finger.</p>
+        <p>3. When you're done, hit the red button so the next person knows that page is taken.</p>
+        <p style="margin-top:20px;">If the book closes by itself, it just means nobody touched it for a while. Open it back up.</p>
+        <p style="margin-top:15px; font-style:italic;">P.S. The cheese touch is real. Don't ask.</p>
+      </div>
+    </div>
+  `;
+  book.appendChild(intro2);
+
+  // 40 signing pages
+  for (let i = 0; i < TOTAL_SIGNING_PAGES; i++) {
+    const page = document.createElement('div');
+    page.className = 'page lined signing-page';
+    page.dataset.pageIndex = i;
+    page.innerHTML = `
+      <div class="page-content">
+        <canvas class="draw-canvas"></canvas>
+        <button class="done-btn">This page is mine</button>
+        <div class="signed-label" style="display:none;">Signed</div>
+      </div>
+    `;
+    book.appendChild(page);
+  }
+
+  // Back cover
+  const back = document.createElement('div');
+  back.className = 'page page-cover';
+  back.dataset.density = 'hard';
+  back.innerHTML = `<h2 style="font-size:2.5rem;">The End<br>(for now)</h2>`;
+  book.appendChild(back);
+}
+
+function initBook() {
+  createPages();
+  const bookEl = document.getElementById('book');
+
+  pageFlip = new St.PageFlip(bookEl, {
+    width: 400,
+    height: 550,
+    size: 'stretch',
+    minWidth: 300,
+    maxWidth: 800,
+    minHeight: 400,
+    maxHeight: 900,
+    showCover: true,
+    mobileScrollSupport: false,
+    useMouseEvents: true,
+    maxShadowOpacity: 0.4,
+    drawShadow: true,
+    flippingTime: 800
+  });
+
+  pageFlip.loadFromHTML(document.querySelectorAll('.page'));
+
+  // Setup canvases after load
+  setTimeout(setupCanvases, 300);
+
+  pageFlip.on('flip', () => {
+    lastActivity = Date.now();
+  });
+}
+
+function setupCanvases() {
+  document.querySelectorAll('.signing-page').forEach((pageEl, idx) => {
+    const canvas = pageEl.querySelector('.draw-canvas');
+    const btn = pageEl.querySelector('.done-btn');
+    const label = pageEl.querySelector('.signed-label');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      if (signedPages[idx]) {
+        const img = new Image();
+        img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        img.src = signedPages[idx];
+        canvas.style.pointerEvents = 'none';
+        btn.style.display = 'none';
+        label.style.display = 'block';
+      }
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    let drawing = false;
+    let lastX, lastY;
+
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+      };
+    }
+
+    function startDraw(e) {
+      if (signedPages[idx]) return;
+      e.preventDefault();
+      drawing = true;
+      const pos = getPos(e);
+      lastX = pos.x;
+      lastY = pos.y;
+      lastActivity = Date.now();
+    }
+
+    function draw(e) {
+      if (!drawing || signedPages[idx]) return;
+      e.preventDefault();
+      const pos = getPos(e);
+      ctx.beginPath();
+      ctx.moveTo(lastX, lastY);
+      ctx.lineTo(pos.x, pos.y);
+      ctx.strokeStyle = '#222';
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+      lastX = pos.x;
+      lastY = pos.y;
+      lastActivity = Date.now();
+    }
+
+    function endDraw() {
+      drawing = false;
+    }
+
+    canvas.addEventListener('pointerdown', startDraw);
+    canvas.addEventListener('pointermove', draw);
+    canvas.addEventListener('pointerup', endDraw);
+    canvas.addEventListener('pointerleave', endDraw);
+    canvas.addEventListener('touchstart', startDraw, {passive: false});
+    canvas.addEventListener('touchmove', draw, {passive: false});
+    canvas.addEventListener('touchend', endDraw);
+
+    btn.addEventListener('click', () => {
+      if (signedPages[idx]) return;
+      signedPages[idx] = canvas.toDataURL();
+      localStorage.setItem('eli-diary-signed', JSON.stringify(signedPages));
+      canvas.style.pointerEvents = 'none';
+      btn.style.display = 'none';
+      label.style.display = 'block';
+      lastActivity = Date.now();
+    });
+  });
+}
+
+function checkIdle() {
+  if (Date.now() - lastActivity > IDLE_MS) {
+    if (pageFlip && pageFlip.getCurrentPageIndex() > 0) {
+      pageFlip.flip(0);
+    }
+    lastActivity = Date.now(); // prevent constant flipping
+  }
+}
+
+function startIdleWatch() {
+  idleTimer = setInterval(checkIdle, 1000);
+}
+
+document.getElementById('fullscreen-btn').addEventListener('click', () => {
+  const el = document.documentElement;
+  if (el.requestFullscreen) {
+    el.requestFullscreen().catch(() => {});
+  } else if (el.webkitRequestFullscreen) {
+    el.webkitRequestFullscreen();
+  }
+  lastActivity = Date.now();
+});
+
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if (confirm('Clear all signatures?')) {
+    localStorage.removeItem('eli-diary-signed');
+    location.reload();
+  }
+});
+
+// Show reset only if there are signatures (for testing)
+if (Object.keys(signedPages).length > 0) {
+  document.getElementById('reset-btn').style.display = 'inline-block';
+}
+
+// Activity listeners
+['touchstart', 'touchmove', 'mousedown', 'mousemove', 'keydown'].forEach(evt => {
+  document.addEventListener(evt, () => { lastActivity = Date.now(); }, {passive: true});
+});
+
+window.addEventListener('load', () => {
+  initBook();
+  startIdleWatch();
+});
+</script>
+</body>
+</html>
