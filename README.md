@@ -1,21 +1,11 @@
-# Diary of a Wimpy Kid: Eli's Big deal
+# Eli's Big Deal
 
-Digital guestbook for Eli's 8th birthday party.
+Birthday diary for the party on November 14.
 
-## Enable GitHub Pages (one-time)
+Open https://cranmerpd.github.io/eli-birthday-diary/ on the iPad. Use one tab, and leave wifi on (the page loads its code and fonts from the internet).
 
-1. Go to **Settings** → **Pages**
-2. Under **Build and deployment**, set Source to **Deploy from a branch**
-3. Branch: `main` / `/ (root)`
-4. Save
+Guests flip to a blank page and draw with a finger. A Done button shows up once the ink starts. After Done, that page locks and the next guest flips past it.
 
-Site will be at: https://cranmerpd.github.io/eli-birthday-diary/
+Drawings stay in that browser only. Do not clear the site data during the party.
 
-Open that on the iPad, tap **Open the Diary (Fullscreen)**, and hand it to guests.
-
-- Flip until you hit a blank page.
-- Draw with your finger.
-- Tap **This page is mine** when done so the next person flips past it.
-- After 2 minutes of no activity the book closes itself.
-
-Signatures stay on that iPad (localStorage).
+On the last page, press and hold for about one second, then confirm, if you need to erase the whole book.
